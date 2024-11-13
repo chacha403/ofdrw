@@ -271,20 +271,20 @@ public class CT_Attachment extends OFDElement {
      * @return 日期时间
      */
     private LocalDateTime parseLocalDateTime(String dateTimeStr) {
-        if (dateTimeStr.indexOf('T') == -1) {
-            return LocalDateTime.parse(dateTimeStr, Const.LOCAL_DATETIME_FORMATTER);
-        } else if ((dateTimeStr.indexOf('/') == -1)) {
-            // 兼容非标准日期格式解析
-            return LocalDateTime.parse(dateTimeStr, DateTimeFormatter.ofPattern("[yyyy-MM-dd][yyyy/MM/dd] HH:mm:ss"));
-        } else {
-            try {
+        try {
+            if (dateTimeStr.indexOf('T') == -1) {
+                return LocalDateTime.parse(dateTimeStr, Const.LOCAL_DATETIME_FORMATTER);
+            } else if ((dateTimeStr.indexOf('/') == -1)) {
+                // 兼容非标准日期格式解析
+                return LocalDateTime.parse(dateTimeStr, DateTimeFormatter.ofPattern("[yyyy-MM-dd][yyyy/MM/dd] HH:mm:ss"));
+            } else {
                 return LocalDateTime.parse(dateTimeStr, Const.DATETIME_FORMATTER);
-            }catch (Exception e) {
-                try {
-                    return LocalDate.parse(dateTimeStr.substring(0, 10), Const.DATE_FORMATTER).atStartOfDay();
-                } catch (Exception e1) {
-                    return LocalDateTime.now();
-                }
+            }
+        } catch (Exception e) {
+            try {
+                return LocalDate.parse(dateTimeStr.substring(0, 10), Const.DATE_FORMATTER).atStartOfDay();
+            } catch (Exception e1) {
+                return LocalDateTime.now();
             }
         }
     }
