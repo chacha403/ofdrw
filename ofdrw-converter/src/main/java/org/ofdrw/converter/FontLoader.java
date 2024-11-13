@@ -262,10 +262,10 @@ public final class FontLoader {
      * @return this
      */
     public FontLoader addAliasMapping(String fontName, String alias) {
-        if (fontName == null || fontName.length() == 0) {
+        if (fontName == null || fontName.isEmpty()) {
             return this;
         }
-        if (alias == null || alias.length() == 0) {
+        if (alias == null || alias.isEmpty()) {
             return this;
         }
         fontNameAliasMapping.put(fontName, alias);
@@ -297,10 +297,10 @@ public final class FontLoader {
      * @return this
      */
     public FontLoader addSimilarFontReplaceRegexMapping(String fontNameRegex, String fontName) {
-        if (fontNameRegex == null || fontNameRegex.length() == 0) {
+        if (fontNameRegex == null || fontNameRegex.isEmpty()) {
             return this;
         }
-        if (fontName == null || fontName.length() == 0) {
+        if (fontName == null || fontName.isEmpty()) {
             return this;
         }
         try {
@@ -340,7 +340,7 @@ public final class FontLoader {
      * @return this
      */
     public FontLoader addSystemFontMapping(String fontName, String fontFilePath) {
-        if (fontName == null || fontName.length() == 0) {
+        if (fontName == null || fontName.isEmpty()) {
             return this;
         }
         File file = new File(fontFilePath);
@@ -486,9 +486,10 @@ public final class FontLoader {
      * @return 字体
      */
     public TrueTypeFont loadExternalFont(@NotNull String absPath, @Nullable String familyName, @Nullable String fontName) {
-        try {
+
+        try (InputStream inputStream = Files.newInputStream(Paths.get(absPath))) {
             // 内存中不用主动关闭
-            TTFDataStream raf = new MemoryTTFDataStream(new FileInputStream(absPath));
+            TTFDataStream raf = new MemoryTTFDataStream(inputStream);
             int offset = absPath.toLowerCase().lastIndexOf('.');
             String suffix = offset == -1 ? ".ttf" : absPath.toLowerCase().substring(offset);
             switch (suffix) {
@@ -620,7 +621,7 @@ public final class FontLoader {
 
     /**
      * 获取字体别名
-     * 
+     *
      * @param ctFont 字体对象
      * @return
      */
@@ -713,16 +714,16 @@ public final class FontLoader {
             return null;
         }
         FontProgram fontProgram = null;
-		try {
-		 // 使用统一的工具类加载iText字体，对裁剪字体进行兼容
-			fontProgram = ItextFontUtil.loadFontProgram(fontAbsPath);
-			return fontProgram;
-		} catch (Exception e) {
-			if (DEBUG) {
-				log.info("字体加载失败 " + fontAbsPath, e);
-			}
-			return null;
-		}
+        try {
+            // 使用统一的工具类加载iText字体，对裁剪字体进行兼容
+            fontProgram = ItextFontUtil.loadFontProgram(fontAbsPath);
+            return fontProgram;
+        } catch (Exception e) {
+            if (DEBUG) {
+                log.info("字体加载失败 " + fontAbsPath, e);
+            }
+            return null;
+        }
     }
 
 

@@ -35,7 +35,7 @@ public class CT_Attachment extends OFDElement {
      * @return this
      */
     public CT_Attachment setID(String id) {
-        if (id == null || id.trim().length() == 0) {
+        if (id == null || id.trim().isEmpty()) {
             throw new IllegalArgumentException("附件标识（ID）为空");
         }
         this.addAttribute("ID", id);
@@ -50,7 +50,7 @@ public class CT_Attachment extends OFDElement {
      */
     public String getID() {
         String str = this.attributeValue("ID");
-        if (str == null || str.trim().length() == 0) {
+        if (str == null || str.trim().isEmpty()) {
             throw new IllegalArgumentException("附件标识（ID）为空");
         }
         return str;
@@ -64,7 +64,7 @@ public class CT_Attachment extends OFDElement {
      * @return this
      */
     public CT_Attachment setAttachmentName(String attachmentName) {
-        if (attachmentName == null || attachmentName.trim().length() == 0) {
+        if (attachmentName == null || attachmentName.trim().isEmpty()) {
             throw new IllegalArgumentException("附件名称（Name）为空");
         }
         this.addAttribute("Name", attachmentName);
@@ -79,7 +79,7 @@ public class CT_Attachment extends OFDElement {
      */
     public String getAttachmentName() {
         String str = this.attributeValue("Name");
-        if (str == null || str.trim().length() == 0) {
+        if (str == null || str.trim().isEmpty()) {
             throw new IllegalArgumentException("附件名称（Name）为空");
 
         }
@@ -94,7 +94,7 @@ public class CT_Attachment extends OFDElement {
      * @return this
      */
     public CT_Attachment setFormat(String format) {
-        if (format == null || format.trim().length() == 0) {
+        if (format == null || format.trim().isEmpty()) {
             this.removeAttr("Format");
             return this;
         }
@@ -156,7 +156,7 @@ public class CT_Attachment extends OFDElement {
     @Deprecated
     public LocalDate getCreationDate() {
         String str = this.attributeValue("CreationDate");
-        if (str == null || str.trim().length() == 0) {
+        if (str == null || str.trim().isEmpty()) {
             return null;
         }
         str = str.trim();
@@ -176,7 +176,7 @@ public class CT_Attachment extends OFDElement {
      */
     public LocalDateTime getCreationDateTime() {
         String str = this.attributeValue("CreationDate");
-        if (str == null || str.trim().length() == 0) {
+        if (str == null || str.trim().isEmpty()) {
             return null;
         }
         str = str.trim();
@@ -232,7 +232,7 @@ public class CT_Attachment extends OFDElement {
     @Deprecated
     public LocalDate getModDate() {
         String str = this.attributeValue("ModDate");
-        if (str == null || str.trim().length() == 0) {
+        if (str == null || str.trim().isEmpty()) {
             return null;
         }
         str = str.trim();
@@ -252,7 +252,7 @@ public class CT_Attachment extends OFDElement {
      */
     public LocalDateTime getModDateTime() {
         String str = this.attributeValue("ModDate");
-        if (str == null || str.trim().length() == 0) {
+        if (str == null || str.trim().isEmpty()) {
             return null;
         }
         str = str.trim();
@@ -277,7 +277,15 @@ public class CT_Attachment extends OFDElement {
             // 兼容非标准日期格式解析
             return LocalDateTime.parse(dateTimeStr, DateTimeFormatter.ofPattern("[yyyy-MM-dd][yyyy/MM/dd] HH:mm:ss"));
         } else {
-            return LocalDateTime.parse(dateTimeStr, Const.DATETIME_FORMATTER);
+            try {
+                return LocalDateTime.parse(dateTimeStr, Const.DATETIME_FORMATTER);
+            }catch (Exception e) {
+                try {
+                    return LocalDate.parse(dateTimeStr.substring(0, 10), Const.DATE_FORMATTER).atStartOfDay();
+                } catch (Exception e1) {
+                    return LocalDateTime.now();
+                }
+            }
         }
     }
 
@@ -309,7 +317,7 @@ public class CT_Attachment extends OFDElement {
      */
     public Double getSize() {
         String str = this.attributeValue("Size");
-        if (str == null || str.trim().length() == 0) {
+        if (str == null || str.trim().isEmpty()) {
             return null;
         }
         return Double.parseDouble(str);
@@ -343,7 +351,7 @@ public class CT_Attachment extends OFDElement {
      */
     public Boolean getVisible() {
         String str = this.attributeValue("Visible");
-        if (str == null || str.trim().length() == 0) {
+        if (str == null || str.trim().isEmpty()) {
             return true;
         }
         return Boolean.parseBoolean(str);
@@ -359,7 +367,7 @@ public class CT_Attachment extends OFDElement {
      * @return this
      */
     public CT_Attachment setUsage(String usage) {
-        if (usage == null || usage.trim().length() == 0) {
+        if (usage == null || usage.trim().isEmpty()) {
             this.removeAttr("Usage");
             return this;
         }
@@ -377,7 +385,7 @@ public class CT_Attachment extends OFDElement {
      */
     public String getUsage() {
         String str = this.attributeValue("Usage");
-        if (str == null || str.trim().length() == 0) {
+        if (str == null || str.trim().isEmpty()) {
             return "none";
         }
         return str;

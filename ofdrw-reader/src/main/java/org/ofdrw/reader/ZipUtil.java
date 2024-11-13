@@ -1,9 +1,13 @@
 package org.ofdrw.reader;
 
+import net.lingala.zip4j.io.inputstream.ZipInputStream;
+import net.lingala.zip4j.model.LocalFileHeader;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
+import org.apache.commons.io.IOUtils;
 
 import java.io.*;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
@@ -81,7 +85,7 @@ public class ZipUtil {
      * @throws IOException IO异常
      */
     public static void unZipFileByApacheCommonCompress(File srcFile, String descDir) throws IOException {
-        if (srcFile == null || srcFile.exists() == false) {
+        if (srcFile == null || !srcFile.exists()) {
             throw new IOException("解压文件不存在: " + srcFile);
         }
         try (FileInputStream fin = new FileInputStream(srcFile)) {
@@ -111,7 +115,7 @@ public class ZipUtil {
                     f = pathFile.resolve(new String(entry.getRawName(), "GBK"));
                 }
 
-                if (f == null || f.startsWith(pathFile) == false) {
+                if (!f.startsWith(pathFile)) {
                     throw new IOException(String.format("不合法的路径：%s", f));
                 }
 
@@ -124,6 +128,49 @@ public class ZipUtil {
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * 解压zipFile
+     *
+     * @param src     带解压的源文件流
+     * @param descDir 解压到目录
+     * @throws IOException IO异常
+     */
+    public static void unZipFileByZip4j(InputStream src, String descDir) throws IOException {
+        Path pathFile = Files.createDirectories(Paths.get(descDir));
+        try (ZipInputStream zipFile = new ZipInputStream(src, Charset.forName(charset))) {
+            LocalFileHeader entry;
+            while ((entry = zipFile.getNextEntry()) != null) {
+                //校验路径合法性
+                Path f;
+                try {
+                    f = pathFile.resolve(entry.getFileName());
+                } catch (InvalidPathException e) {
+                    // 尝试使用GBK解析
+                    f = pathFile.resolve(new String(entry.getFileName().getBytes(), "GBK"));
+                }
+
+                if (!f.startsWith(pathFile)) {
+                    throw new IOException(String.format("不合法的路径：%s", f));
+                }
+
+                if (entry.isDirectory()) {
+                    Files.createDirectories(f);
+                } else {
+                    Files.createDirectories(f.getParent());
+                    try (OutputStream o = Files.newOutputStream(f)) {
+                        IOUtils.copy(zipFile, o);
+                    }
+                }
+            }
+        }
+    }
+
+    public static void unZipFileByZip4j(File zipFile, String descDir) throws IOException {
+        try (InputStream inputStream = Files.newInputStream(zipFile.toPath())) {
+            unZipFileByZip4j(inputStream, descDir);
         }
     }
 }
