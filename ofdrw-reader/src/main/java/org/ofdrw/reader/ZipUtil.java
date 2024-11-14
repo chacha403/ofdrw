@@ -2,8 +2,6 @@ package org.ofdrw.reader;
 
 import net.lingala.zip4j.io.inputstream.ZipInputStream;
 import net.lingala.zip4j.model.LocalFileHeader;
-import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
-import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 import org.apache.commons.io.IOUtils;
 
 import java.io.*;
@@ -58,77 +56,12 @@ public class ZipUtil {
     /**
      * 解压文件到指定目录
      *
-     * @param src     压缩文件流
-     * @param descDir 解压到目录
-     * @throws IOException 文件操作IO异常
-     */
-    public static void unZipFiles(InputStream src, String descDir) throws IOException {
-        unZipFileByApacheCommonCompress(src, descDir);
-    }
-
-    /**
-     * 解压文件到指定目录
-     *
      * @param zipFile 需要解压的文件
      * @param descDir 解压到目录
      * @throws IOException 文件操作IO异常
      */
     public static void unZipFiles(File zipFile, String descDir) throws IOException {
-        unZipFileByApacheCommonCompress(zipFile, descDir);
-    }
-
-    /**
-     * 使用apache common compress库 解压zipFile，能支持更多zip包解压的特性
-     *
-     * @param srcFile 带解压的源文件
-     * @param descDir 解压到目录
-     * @throws IOException IO异常
-     */
-    public static void unZipFileByApacheCommonCompress(File srcFile, String descDir) throws IOException {
-        if (srcFile == null || !srcFile.exists()) {
-            throw new IOException("解压文件不存在: " + srcFile);
-        }
-        try (FileInputStream fin = new FileInputStream(srcFile)) {
-            unZipFileByApacheCommonCompress(fin, descDir);
-        }
-    }
-
-    /**
-     * apache common compress库 解压zipFile
-     *
-     * @param src     带解压的源文件流
-     * @param descDir 解压到目录
-     * @throws IOException IO异常
-     */
-    public static void unZipFileByApacheCommonCompress(InputStream src, String descDir) throws IOException {
-        Path pathFile = Files.createDirectories(Paths.get(descDir));
-
-        try (ZipArchiveInputStream zipFile = new ZipArchiveInputStream(src, charset, false, true)) {
-            ZipArchiveEntry entry = null;
-            while ((entry = zipFile.getNextEntry()) != null) {
-                //校验路径合法性
-                Path f = null;
-                try {
-                    f = pathFile.resolve(entry.getName());
-                } catch (InvalidPathException e) {
-                    // 尝试使用GBK解析
-                    f = pathFile.resolve(new String(entry.getRawName(), "GBK"));
-                }
-
-                if (!f.startsWith(pathFile)) {
-                    throw new IOException(String.format("不合法的路径：%s", f));
-                }
-
-                if (entry.isDirectory()) {
-                    Files.createDirectories(f);
-                } else {
-                    Files.createDirectories(f.getParent());
-                    try (OutputStream o = Files.newOutputStream(f)) {
-                        org.apache.commons.io.IOUtils.copy(zipFile, o);
-                    }
-                }
-            }
-        }
+        unZipFileByZip4j(zipFile, descDir);
     }
 
     /**
