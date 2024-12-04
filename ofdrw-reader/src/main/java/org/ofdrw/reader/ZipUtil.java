@@ -1,13 +1,19 @@
 package org.ofdrw.reader;
 
-import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
-import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
+import net.lingala.zip4j.ZipFile;
+import net.lingala.zip4j.exception.ZipException;
+import net.lingala.zip4j.io.inputstream.ZipInputStream;
+import net.lingala.zip4j.model.FileHeader;
+import net.lingala.zip4j.model.LocalFileHeader;
+import org.apache.commons.io.IOUtils;
 
 import java.io.*;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 
 /**
  * ZIP 文件解压工具
@@ -58,8 +64,8 @@ public class ZipUtil {
      * @param descDir 解压到目录
      * @throws IOException 文件操作IO异常
      */
-    public static void unZipFiles(InputStream src, String descDir) throws IOException {
-        unZipFileByApacheCommonCompress(src, descDir);
+    public static void unZipFiles(InputStream src, String encoding, String descDir) throws IOException {
+        unzipInputStreamByZip4j(src, encoding, descDir);
     }
 
     /**
@@ -70,7 +76,7 @@ public class ZipUtil {
      * @throws IOException 文件操作IO异常
      */
     public static void unZipFiles(File zipFile, String descDir) throws IOException {
-        unZipFileByApacheCommonCompress(zipFile, descDir);
+        unzipInput(zipFile, descDir);
     }
 
     /**
@@ -80,50 +86,87 @@ public class ZipUtil {
      * @param descDir 解压到目录
      * @throws IOException IO异常
      */
-    public static void unZipFileByApacheCommonCompress(File srcFile, String descDir) throws IOException {
-        if (srcFile == null || srcFile.exists() == false) {
+    public static void unzipInput(File srcFile, String descDir) throws IOException {
+        if (srcFile == null || !srcFile.exists()) {
             throw new IOException("解压文件不存在: " + srcFile);
         }
         try (FileInputStream fin = new FileInputStream(srcFile)) {
-            unZipFileByApacheCommonCompress(fin, descDir);
+            String zipEncoding = zipEncoding(srcFile);
+            unzipInputStreamByZip4j(fin, zipEncoding, descDir);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 
     /**
-     * apache common compress库 解压zipFile
+     * 解压zipFile
      *
-     * @param src     带解压的源文件流
-     * @param descDir 解压到目录
+     * @param inputStream 带解压的源文件流
+     * @param descDir     解压到目录
      * @throws IOException IO异常
      */
-    public static void unZipFileByApacheCommonCompress(InputStream src, String descDir) throws IOException {
+    public static void unzipInputStreamByZip4j(InputStream inputStream, String charset, String descDir) throws IOException {
         Path pathFile = Files.createDirectories(Paths.get(descDir));
 
-        try (ZipArchiveInputStream zipFile = new ZipArchiveInputStream(src, charset, false, true)) {
-            ZipArchiveEntry entry = null;
-            while ((entry = zipFile.getNextEntry()) != null) {
-                //校验路径合法性
-                Path f = null;
+        try (ZipInputStream zipInputStream = new ZipInputStream(inputStream, Charset.forName(charset))) {
+            LocalFileHeader fileHeader = null;
+            while ((fileHeader = zipInputStream.getNextEntry()) != null) {
+                Path f = null; //校验路径合法性
                 try {
-                    f = pathFile.resolve(entry.getName());
+                    f = pathFile.resolve(fileHeader.getFileName());
                 } catch (InvalidPathException e) {
-                    // 尝试使用GBK解析
-                    f = pathFile.resolve(new String(entry.getRawName(), "GBK"));
+                    throw new IOException(String.format("ZipEntry文件名乱码：%s", fileHeader.getFileName()));
                 }
-
-                if (f == null || f.startsWith(pathFile) == false) {
+                if (!f.startsWith(pathFile)) {
                     throw new IOException(String.format("不合法的路径：%s", f));
                 }
-
-                if (entry.isDirectory()) {
+                if (fileHeader.isDirectory()) {
                     Files.createDirectories(f);
                 } else {
                     Files.createDirectories(f.getParent());
                     try (OutputStream o = Files.newOutputStream(f)) {
-                        org.apache.commons.io.IOUtils.copy(zipFile, o);
+                        IOUtils.copy(zipInputStream, o);
                     }
                 }
             }
+        } catch (ZipException e) {
+            throw new IOException("解压文件异常", e);
         }
+    }
+
+    /**
+     * 判断该使用哪种编码方式解压
+     *
+     * @param file
+     * @return
+     * @throws Exception
+     */
+    public static String zipEncoding(File file) throws Exception {
+        String encoding = "GBK";
+        try (ZipFile zipFile = new ZipFile(file)) {
+            zipFile.setCharset(Charset.forName(encoding));
+            List<FileHeader> headers = zipFile.getFileHeaders();
+            for (FileHeader fileHeader : headers) {
+                String fileName = fileHeader.getFileName();
+                if (isMessyCode(fileName)) {
+                    encoding = "UTF-8";
+                    break;
+                }
+            }
+            return encoding;
+        }
+    }
+
+    private static boolean isMessyCode(String str) {
+        for (int i = 0; i < str.length(); i++) {
+            char c = str.charAt(i);
+            // 当从Unicode编码向某个字符集转换时，如果在该字符集中没有对应的编码，则得到0x3f（即问号字符?）
+            // 从其他字符集向Unicode编码转换时，如果这个二进制数在该字符集中没有标识任何的字符，则得到的结果是0xfffd
+            if ((int) c == 0xfffd) {
+                // 存在乱码
+                return true;
+            }
+        }
+        return false;
     }
 }

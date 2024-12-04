@@ -5,7 +5,7 @@
     <parent>
         <artifactId>ofdrw</artifactId>
         <groupId>org.ofdrw</groupId>
-        <version>2.3.4</version>
+        <version>2.3.4d</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -23,7 +23,11 @@
             <artifactId>ofdrw-gv</artifactId>
             <version>${project.version}</version>
         </dependency>
-
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.14.0</version>
+        </dependency>
         <dependency>
             <groupId>org.ofdrw</groupId>
             <artifactId>ofdrw-reader</artifactId>
@@ -53,7 +57,6 @@
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcprov-jdk15on</artifactId>
         </dependency>
-
         <dependency>
             <groupId>org.apache.pdfbox</groupId>
             <artifactId>fontbox</artifactId>

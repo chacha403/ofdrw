@@ -271,13 +271,17 @@ public class CT_Attachment extends OFDElement {
      * @return 日期时间
      */
     private LocalDateTime parseLocalDateTime(String dateTimeStr) {
-        if (dateTimeStr.indexOf('T') == -1) {
-            return LocalDateTime.parse(dateTimeStr, Const.LOCAL_DATETIME_FORMATTER);
-        } else if ((dateTimeStr.indexOf('/') == -1)) {
-            // 兼容非标准日期格式解析
-            return LocalDateTime.parse(dateTimeStr, DateTimeFormatter.ofPattern("[yyyy-MM-dd][yyyy/MM/dd] HH:mm:ss"));
-        } else {
-            return LocalDateTime.parse(dateTimeStr, Const.DATETIME_FORMATTER);
+        try {
+            if (dateTimeStr.indexOf('T') == -1) {
+                return LocalDateTime.parse(dateTimeStr, Const.LOCAL_DATETIME_FORMATTER);
+            } else if ((dateTimeStr.indexOf('/') == -1)) {
+                // 兼容非标准日期格式解析
+                return LocalDateTime.parse(dateTimeStr, DateTimeFormatter.ofPattern("[yyyy-MM-dd][yyyy/MM/dd] HH:mm:ss"));
+            } else {
+                return LocalDateTime.parse(dateTimeStr, Const.DATETIME_FORMATTER);
+            }
+        } catch (Exception e) {
+            return LocalDate.now().atStartOfDay();
         }
     }
 
