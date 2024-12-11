@@ -95,7 +95,7 @@ public class ZipUtil {
             unzipInputStreamByZip4j(fin, null, descDir);
         } catch (Exception e) {
             // 使用linux系统自带的unzip命令解压
-            String cmd = String.format("unzip -o %s -d %s", srcFile.getAbsolutePath(), descDir);
+            String cmd = String.format("/bin/sh -c unzip -o %s -d %s", srcFile.getAbsolutePath(), descDir);
             Process process = Runtime.getRuntime().exec(cmd);
             try {
                 int exitCode = process.waitFor();
@@ -175,9 +175,5 @@ public class ZipUtil {
             }
         }
         return false;
-    }
-
-    public static void main(String[] args) throws IOException {
-        unzipInput(new File("/Users/rink/Downloads/0be231b5-8003-4938-a3fb-9bce96f9c020.ofd"), "/tmp/");
     }
 }
