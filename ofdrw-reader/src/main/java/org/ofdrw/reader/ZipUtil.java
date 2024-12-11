@@ -91,10 +91,17 @@ public class ZipUtil {
             throw new IOException("解压文件不存在: " + srcFile);
         }
         try (FileInputStream fin = new FileInputStream(srcFile)) {
-            String zipEncoding = zipEncoding(srcFile);
-            unzipInputStreamByZip4j(fin, zipEncoding, descDir);
+            //String zipEncoding = zipEncoding(srcFile);
+            unzipInputStreamByZip4j(fin, null, descDir);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            // 使用linux系统自带的unzip命令解压
+            String cmd = String.format("unzip -o %s -d %s", srcFile.getAbsolutePath(), descDir);
+            Process process = Runtime.getRuntime().exec(cmd);
+            try {
+                int exitCode = process.waitFor();
+            } catch (InterruptedException e1) {
+                throw new IOException("解压文件异常", e1);
+            }
         }
     }
 
@@ -107,8 +114,8 @@ public class ZipUtil {
      */
     public static void unzipInputStreamByZip4j(InputStream inputStream, String charset, String descDir) throws IOException {
         Path pathFile = Files.createDirectories(Paths.get(descDir));
-
-        try (ZipInputStream zipInputStream = new ZipInputStream(inputStream, Charset.forName(charset))) {
+        Charset zipCharset = charset == null ? null : Charset.forName(charset);
+        try (ZipInputStream zipInputStream = new ZipInputStream(inputStream, zipCharset)) {
             LocalFileHeader fileHeader = null;
             while ((fileHeader = zipInputStream.getNextEntry()) != null) {
                 Path f = null; //校验路径合法性
@@ -168,5 +175,9 @@ public class ZipUtil {
             }
         }
         return false;
+    }
+
+    public static void main(String[] args) throws IOException {
+        unzipInput(new File("/Users/rink/Downloads/0be231b5-8003-4938-a3fb-9bce96f9c020.ofd"), "/tmp/");
     }
 }
